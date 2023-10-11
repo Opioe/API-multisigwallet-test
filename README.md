@@ -10,7 +10,7 @@ npm init
 
 ```sh
 npm i --save-dev hardhat
-npm i --save-dev @nomicfoundation/hardhat-toolbo
+npm i --save-dev @nomicfoundation/hardhat-toolbox
 npm i fs
 npm i express
 npm i dotenv
