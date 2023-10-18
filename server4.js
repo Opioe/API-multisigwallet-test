@@ -24,11 +24,11 @@ async function main() {
     const contractFactory = new ethers.ContractFactory(contractABI, contractBytecode, wallet);
 
     const constructorArgs = [arg1, arg2];
-    const data = contractBytecode + contractFactory.interface.encodeDeploy(constructorArgs);
-
+    const encodeConstructorArgs = contractFactory.interface.encodeDeploy(constructorArgs);
+    const data = contractBytecode + encodeConstructorArgs.slice(2);
     console.log("deploying with transaction data");
     const tx = {
-        nonce: 12,
+        nonce: 7,
         to: null,
         value: 0,
         gasPrice: 79520000000000,
