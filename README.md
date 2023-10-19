@@ -11,9 +11,9 @@ npm init
 ```sh
 npm i --save-dev hardhat
 npm i --save-dev @nomicfoundation/hardhat-toolbox
-npm i fs
 npm i express
 npm i dotenv
+npm i ethers
 ```
 
 #### 3- Global dependecies to run the API
@@ -22,15 +22,9 @@ npm i dotenv
 npm i -g nodemon
 ```
 
-#### 3- Initiate hardhat 
-
-```sh
-npx hardhat init
-```
-
 #### 4- Set up the .env 
 
-- INFURA_API_KEY = "9a...51" 
+- QUICKNODE_API_KEY = "9a...51" 
 - WALLET_PRIVATE_KEY = "f3...0p"
 
 #### 5- Compile the contracts
@@ -50,3 +44,5 @@ nodemon server.js
 ```sh
 localhost:3000/deploy
 ```
+
+with constructors arguments in the header of the API call
