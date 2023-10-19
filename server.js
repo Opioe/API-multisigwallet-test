@@ -8,8 +8,14 @@ const { WALLET_PRIVATE_KEY, QUICKNODE_API_KEY } = process.env;
 const RPCurl = 'https://attentive-convincing-pallet.matic-testnet.quiknode.pro/' + QUICKNODE_API_KEY + '/';
 
 const server = express();
+server.use(express.json());
 
 server.post('/deploy', async (req, res) => {
+    console.log("controling the request");
+
+    const arg1 = await req.body.signers;
+    const arg2 = await req.body.required;
+
     console.log("preparing the transaction data");
 
     const provider = new ethers.JsonRpcProvider(RPCurl);
@@ -20,8 +26,6 @@ server.post('/deploy', async (req, res) => {
     const contractArtifact = await hre.artifacts.readArtifact('MultiSigWallet');
     const contractBytecode = contractArtifact.bytecode;
     const contractABI = contractArtifact.abi;
-    const arg1 = ["0x07128963Cafd50de0E338b3234ECe7C6D4F100D5", "0x31236F42F4d3c052cc4720Da7CFFc74C9A1dA2B0"];
-    const arg2 = 1;
 
     const contractFactory = new ethers.ContractFactory(contractABI, contractBytecode, wallet);
 
@@ -39,10 +43,13 @@ server.post('/deploy', async (req, res) => {
         chainId: 80001,
     };
     const sendTxResponse = await wallet.sendTransaction(tx);
+    console.log("deployed");
 
-    return res.send({
+    res.send({
         sendTxResponse: sendTxResponse,
     });
+    res.end();
+    console.log("API response sent");
 });
 
 server.listen(3000, () => {
