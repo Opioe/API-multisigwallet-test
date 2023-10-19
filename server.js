@@ -1,28 +1,47 @@
-const hre = require('hardhat');
 const express = require('express');
+const ethers = require("ethers");
+const dotenv = require('dotenv');
+const hre = require('hardhat');
+dotenv.config();
+const { WALLET_PRIVATE_KEY, QUICKNODE_API_KEY } = process.env;
+
+const RPCurl = 'https://attentive-convincing-pallet.matic-testnet.quiknode.pro/' + QUICKNODE_API_KEY + '/';
 
 const server = express();
 
-const network = 'sepolia';
-
 server.post('/deploy', async (req, res) => {
-    var arg1 = ["0x07128963Cafd50de0E338b3234ECe7C6D4F100D5", "0xCeA31A284AE1Be036c4c3383D19393438f2ACaF5"]
-    var arg2 = 1
+    console.log("preparing the transaction data");
 
-    const MyContract = await hre.ethers.getContractFactory('MultiSigWallet', {
-        signer: hre.network.provider.getSigner(),
-        network,
-    });
-    const myContract = await MyContract.deploy(arg1, arg2);
+    const provider = new ethers.JsonRpcProvider(RPCurl);
+    const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
 
-    await myContract.deployed();
+    const nonce = await wallet.getNonce();
 
-    console.log('Contract deployed to address:', myContract.address);
+    const contractArtifact = await hre.artifacts.readArtifact('MultiSigWallet');
+    const contractBytecode = contractArtifact.bytecode;
+    const contractABI = contractArtifact.abi;
+    const arg1 = ["0x07128963Cafd50de0E338b3234ECe7C6D4F100D5", "0x31236F42F4d3c052cc4720Da7CFFc74C9A1dA2B0"];
+    const arg2 = 1;
 
-    res.send({
-        address: myContract.address,
-        etherscan: "https://sepolia.etherscan.io/address/" + myContract.address,
-        abi: MyContract.interface.format('json')
+    const contractFactory = new ethers.ContractFactory(contractABI, contractBytecode, wallet);
+
+    const constructorArgs = [arg1, arg2];
+    const encodeConstructorArgs = contractFactory.interface.encodeDeploy(constructorArgs);
+    const data = contractBytecode + encodeConstructorArgs.slice(2);
+    console.log("deploying with transaction data");
+    const tx = {
+        nonce: nonce,
+        to: null,
+        value: 0,
+        gasPrice: 1860267955,
+        gasLimit: 21000000,
+        data: data,
+        chainId: 80001,
+    };
+    const sendTxResponse = await wallet.sendTransaction(tx);
+
+    return res.send({
+        sendTxResponse: sendTxResponse,
     });
 });
 
