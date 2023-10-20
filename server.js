@@ -52,6 +52,22 @@ server.post('/deploy', async (req, res) => {
     console.log("API response sent");
 });
 
+server.get('/contractAddress', async (req, res) => {
+    const txhash = await req.body.txhash;
+    const provider = new ethers.JsonRpcProvider(RPCurl);
+    const tx = await provider.getTransaction(txhash);
+    if (tx == null) {
+        res.send({
+            error: "Transaction not found or not mined yet",
+        });
+        res.end();
+    }
+    res.send({
+        contractAddress: tx,
+    });
+    res.end();
+});
+
 server.listen(3000, () => {
     console.log('Server listening on port 3000');
 });
