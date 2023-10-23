@@ -68,6 +68,42 @@ server.get('/contractAddress', async (req, res) => {
     res.end();
 });
 
+server.post('/requestOwnership', async (req, res) => {
+    const futureOwner = await req.body.futureOwner;
+    const contractAddress = await req.body.contractAddress;
+
+    const provider = new ethers.JsonRpcProvider(RPCurl);
+
+    const contractArtifact = await hre.artifacts.readArtifact('MultiSigWallet');
+    const contractABI = contractArtifact.abi;
+
+    const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
+    const contract = new ethers.Contract(contractAddress, contractABI, wallet);
+
+    const verif = await contract.owner();
+    if (verif != wallet.address) {
+        res.send({
+            error: "We are not the owner of this contract",
+            contractOwner: verif,
+        });
+        res.end();
+    }
+
+    try {
+        const tx = await contract.transferOwnership(futureOwner);
+        res.send({
+            tx: tx,
+        });
+        res.end();
+    } catch (error) {
+        res.send({
+            error: "Transaction reverted",
+            errorMessage: error.message,
+        });
+        res.end();
+    }
+});
+
 server.listen(3000, () => {
     console.log('Server listening on port 3000');
 });
