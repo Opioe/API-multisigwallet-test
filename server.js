@@ -13,8 +13,41 @@ server.use(express.json());
 server.post('/deploy', async (req, res) => {
     console.log("controling the request");
 
-    const arg1 = await req.body.signers;
-    const arg2 = await req.body.required;
+    const bodyreq_signers = await req.body.signers;
+    if (typeof bodyreq_signers != "object") {
+        res.send({
+            error: "Invalid argument type of signers",
+        });
+        return res.end();
+    }
+    if (bodyreq_signers.length < 2 || bodyreq_signers.length > 10) {
+        res.send({
+            error: "Invalid number of signers, expected between 2 and 10",
+        });
+        return res.end();
+    }
+    for (let i = 0; i < bodyreq_signers.length; i++) {
+        if (typeof bodyreq_signers[i] != "string" || bodyreq_signers[i].length != 42 || bodyreq_signers[i].slice(0, 2) != "0x") {
+            res.send({
+                error: "Invalid argument type of signers at index " + i + " (current argument at index " + i + " : \'" + bodyreq_signers[i] + "\')",
+            });
+            return res.end();
+        }
+    }
+
+    const bodyreq_required = await req.body.required;
+    if (typeof bodyreq_required != "number") {
+        res.send({
+            error: "Invalid argument type of required",
+        });
+        return res.end();
+    }
+    if (bodyreq_required < 1 || bodyreq_required > bodyreq_signers.length) {
+        res.send({
+            error: "Invalid number of required, expected between 1 and the number of signers (in your request : " + bodyreq_signers.length + " signers)",
+        });
+        return res.end();
+    }
 
     console.log("preparing the transaction data");
 
@@ -29,7 +62,7 @@ server.post('/deploy', async (req, res) => {
 
     const contractFactory = new ethers.ContractFactory(contractABI, contractBytecode, wallet);
 
-    const constructorArgs = [arg1, arg2];
+    const constructorArgs = [bodyreq_signers, bodyreq_required];
     const encodeConstructorArgs = contractFactory.interface.encodeDeploy(constructorArgs);
     const data = contractBytecode + encodeConstructorArgs.slice(2);
     console.log("deploying with transaction data");
@@ -44,33 +77,82 @@ server.post('/deploy', async (req, res) => {
     };
     const sendTxResponse = await wallet.sendTransaction(tx);
     console.log("deployed");
-
+    const network = await provider.getNetwork();
     res.send({
-        sendTxResponse: sendTxResponse,
+        success: "Contract deployed successfully",
+        sendTxResponse: sendTxResponse.hash,
+        network: network,
     });
-    res.end();
     console.log("API response sent");
+    return res.end();
 });
 
 server.get('/contractAddress', async (req, res) => {
     const txhash = await req.body.txhash;
+    if (typeof txhash != "string" || txhash.length != 66 || txhash.slice(0, 2) != "0x") {
+        res.send({
+            error: "Invalid argument type or format of txhash",
+        });
+        return res.end();
+    }
+
     const provider = new ethers.JsonRpcProvider(RPCurl);
-    const tx = await provider.getTransaction(txhash);
-    if (tx == null) {
+
+    try {
+        const tx = await provider.getTransaction(txhash);
+        if (tx == null) {
+            res.send({
+                error: "Transaction not found or not mined yet",
+            });
+            return res.end();
+        }
+    } catch (error) {
+        res.send({
+            error: "Invalid txhash",
+            errorMessage: error.message,
+        });
+        return res.end();
+    }
+
+    try {
+        const receipt = await provider.getTransactionReceipt(txhash);
+
+        if (receipt.contractAddress) {
+            res.send({
+                contractAddress: receipt.contractAddress,
+            });
+            return res.end();
+        } else {
+            res.send({
+                error: "No contract address found for this transaction, please verify that the transaction corresponds to a contract deployment",
+            });
+            return res.end();
+        }
+    } catch (error) {
         res.send({
             error: "Transaction not found or not mined yet",
+            errorMessage: error.message,
         });
-        res.end();
+        return res.end();
     }
-    res.send({
-        contractAddress: tx,
-    });
-    res.end();
 });
 
 server.post('/requestOwnership', async (req, res) => {
     const futureOwner = await req.body.futureOwner;
+    if (typeof futureOwner != "string" || futureOwner.length != 42 || futureOwner.slice(0, 2) != "0x") {
+        res.send({
+            error: "Invalid argument type or format of futureOwner",
+        });
+        return res.end();
+    }
+
     const contractAddress = await req.body.contractAddress;
+    if (typeof contractAddress != "string" || contractAddress.length != 42 || contractAddress.slice(0, 2) != "0x") {
+        res.send({
+            error: "Invalid argument type or format of contractAddress",
+        });
+        return res.end();
+    }
 
     const provider = new ethers.JsonRpcProvider(RPCurl);
 
@@ -80,13 +162,23 @@ server.post('/requestOwnership', async (req, res) => {
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
     const contract = new ethers.Contract(contractAddress, contractABI, wallet);
 
+    try {
+        await contract.owner();
+    } catch (error) {
+        res.send({
+            error: "Invalid contract address",
+            errorMessage: error.message,
+        });
+        return res.end();
+    }
+
     const verif = await contract.owner();
     if (verif != wallet.address) {
         res.send({
             error: "We are not the owner of this contract",
             contractOwner: verif,
         });
-        res.end();
+        return res.end();
     }
 
     try {
@@ -94,13 +186,13 @@ server.post('/requestOwnership', async (req, res) => {
         res.send({
             tx: tx,
         });
-        res.end();
+        return res.end();
     } catch (error) {
         res.send({
             error: "Transaction reverted",
             errorMessage: error.message,
         });
-        res.end();
+        return res.end();
     }
 });
 
