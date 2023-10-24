@@ -1,7 +1,7 @@
-## How to run the project :
-
+## How to run the project
 
 #### 1- Initiate node
+
 ```sh
 npm init
 ```
@@ -22,9 +22,9 @@ npm i ethers
 npm i -g nodemon
 ```
 
-#### 4- Set up the .env 
+#### 4- Set up the .env
 
-- QUICKNODE_API_KEY = "9a...51" 
+- QUICKNODE_API_KEY = "9a...51"
 - WALLET_PRIVATE_KEY = "f3...0p"
 
 #### 5- Compile the contracts
@@ -33,7 +33,7 @@ npm i -g nodemon
 npx hardhat compile
 ```
 
-#### 6- Run the API script 
+#### 6- Run the API script
 
 ```sh
 nodemon server.js
@@ -41,8 +41,19 @@ nodemon server.js
 
 #### 7- Call the api
 
+- Post functions of the API can be called with the following paths :
+
 ```sh
 localhost:3000/deploy
+localhost:3000/requestOwnership
 ```
 
-with constructors arguments in the header of the API call
+_with arguments in the body of the API call_
+
+- Get function of the API can be called with the following paths :
+
+```sh
+localhost:3000/contractAddress
+```
+
+_with arguments in the body of the API call_
