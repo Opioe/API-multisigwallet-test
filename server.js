@@ -32,6 +32,19 @@ server.post('/deploy', async (req, res) => {
                 error: "Invalid argument type of signers at index " + i + " (current argument at index " + i + " : \'" + bodyreq_signers[i] + "\')",
             });
             return res.end();
+        } else {
+            for (let j = 2; j < 42; j++) {
+                if (bodyreq_signers[i][j] < "0" || bodyreq_signers[i][j] > "9") {
+                    if (bodyreq_signers[i][j] < "A" || bodyreq_signers[i][j] > "F") {
+                        if (bodyreq_signers[i][j] < "a" || bodyreq_signers[i][j] > "f") {
+                            res.send({
+                                error: "Invalid character at index " + j + " of signers at index " + i + " (current character at index " + j + " : \'" + bodyreq_signers[i][j] + "\')",
+                            });
+                            return res.end();
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -79,7 +92,7 @@ server.post('/deploy', async (req, res) => {
     console.log("deployed");
     const network = await provider.getNetwork();
     res.send({
-        success: "Contract deployed successfully",
+        success: "Transaction sent successfully",
         sendTxResponse: sendTxResponse.hash,
         network: network,
     });
@@ -94,6 +107,19 @@ server.get('/contractAddress', async (req, res) => {
             error: "Invalid argument type or format of txhash",
         });
         return res.end();
+    } else {
+        for (let i = 2; i < 66; i++) {
+            if (txhash[i] < "0" || txhash[i] > "9") {
+                if (txhash[i] < "A" || txhash[i] > "F") {
+                    if (txhash[i] < "a" || txhash[i] > "f") {
+                        res.send({
+                            error: "Invalid character at index " + i + " of txhash (current character at index " + i + " : \'" + txhash[i] + "\')",
+                        });
+                        return res.end();
+                    }
+                }
+            }
+        }
     }
 
     const provider = new ethers.JsonRpcProvider(RPCurl);
@@ -144,6 +170,19 @@ server.post('/requestOwnership', async (req, res) => {
             error: "Invalid argument type or format of futureOwner",
         });
         return res.end();
+    } else {
+        for (let i = 2; i < 42; i++) {
+            if (futureOwner[i] < "0" || futureOwner[i] > "9") {
+                if (futureOwner[i] < "A" || futureOwner[i] > "F") {
+                    if (futureOwner[i] < "a" || futureOwner[i] > "f") {
+                        res.send({
+                            error: "Invalid character at index " + i + " of futureOwner (current character at index " + i + " : \'" + futureOwner[i] + "\')",
+                        });
+                        return res.end();
+                    }
+                }
+            }
+        }
     }
 
     const contractAddress = await req.body.contractAddress;
@@ -152,6 +191,19 @@ server.post('/requestOwnership', async (req, res) => {
             error: "Invalid argument type or format of contractAddress",
         });
         return res.end();
+    } else {
+        for (let i = 2; i < 42; i++) {
+            if (contractAddress[i] < "0" || contractAddress[i] > "9") {
+                if (contractAddress[i] < "A" || contractAddress[i] > "F") {
+                    if (contractAddress[i] < "a" || contractAddress[i] > "f") {
+                        res.send({
+                            error: "Invalid character at index " + i + " of contractAddress (current character at index " + i + " : \'" + contractAddress[i] + "\')",
+                        });
+                        return res.end();
+                    }
+                }
+            }
+        }
     }
 
     const provider = new ethers.JsonRpcProvider(RPCurl);
